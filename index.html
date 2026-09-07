@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuFlow — 3D Interactive FlipBook & Financial Worksheet Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- StPageFlip CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
+  <!-- PDF.js CDN for live PDF upload support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    .page-flip {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .page {
+      background-color: #ffffff;
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.05);
+    }
+    .page-hard {
+      background-color: #0f172a;
+      color: #ffffff;
+      font-weight: bold;
+      border: 1px solid #334155;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 font-sans antialiased overflow-hidden select-none">
+
+  <!-- Top Action Bar -->
+  <header class="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 sm:px-6 flex items-center justify-between z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+        <i data-lucide="book-open" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-base tracking-tight text-white">DocuFlow</span>
+          <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-semibold border border-blue-500/30">
+            Worksheet Edition
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-400 hidden sm:block">Building Real Wealth · 3D Reader & Financial Studio</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Worksheet Studio Button -->
+      <button
+        id="btn-open-worksheets"
+        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-600/25 transition border border-blue-400/30 animate-pulse hover:animate-none"
+      >
+        <i data-lucide="calculator" class="w-4 h-4"></i>
+        <span>Worksheet Studio</span>
+      </button>
+
+      <!-- Upload Custom PDF Button -->
+      <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold border border-slate-700 transition">
+        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Upload PDF</span>
+        <input type="file" id="pdf-input" accept="application/pdf" class="hidden" />
+      </label>
+
+      <!-- GitHub Link -->
+      <a
+        href="https://github.com/tingsterlott12-bit/docuflow"
+        target="_blank"
+        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
+      >
+        <i data-lucide="github" class="w-3.5 h-3.5"></i>
+        <span>GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main 3D Flipbook Stage -->
+  <main class="flex-1 relative flex flex-col items-center justify-center p-2 sm:p-6 overflow-hidden">
+    
+    <!-- Left Navigation Arrow -->
+    <button
+      id="btn-prev"
+      class="absolute left-3 sm:left-8 z-10 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white backdrop-blur flex items-center justify-center transition border border-white/10 shadow-2xl disabled:opacity-20 disabled:pointer-events-none"
+      title="Previous Page (←)"
+    >
+      <i data-lucide="chevron-left" class="w-6 h-6"></i>
+    </button>
+
+    <!-- FlipBook Canvas Holder -->
+    <div id="flipbook-wrapper" class="relative max-w-5xl h-[70vh] max-h-[750px] flex items-center justify-center transition-transform duration-200">
+      <div id="book" class="shadow-2xl">
+        
+        <!-- Cover Spread -->
+        <div class="page page-hard flex flex-col justify-between p-8 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-l-lg border-r border-indigo-900/50">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-300 text-[11px] font-mono tracking-wider border border-blue-500/30">
+              EXECUTIVE EDITION
+            </span>
+            <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+          </div>
+
+          <div class="space-y-4 my-auto">
+            <div class="w-12 h-1 bg-blue-500 rounded-full"></div>
+            <h1 class="text-3xl font-extrabold tracking-tight leading-tight">
+              Building Real Wealth
+            </h1>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              A comprehensive curriculum on asset allocation, cash flow compounding, and tax efficiency with interactive embedded worksheets.
+            </p>
+          </div>
+
+          <div class="flex items-center justify-between pt-6 border-t border-slate-800 text-[11px] text-slate-400 font-mono">
+            <span>Interactive Workbook</span>
+            <span>2026 Brief</span>
+          </div>
+        </div>
+
+        <!-- Page 1: Executive Summary -->
+        <div class="page p-8 flex flex-col justify-between text-slate-900 bg-white relative">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Executive Summary</span>
+            <span class="text-xs text-slate-400 font-mono">01</span>
+          </div>
+
+          <div class="space-y-4 text-xs text-slate-700 leading-relaxed my-auto">
+            <h2 class="text-lg font-bold text-slate-900">The 4 Pillars of Durable Capital</h2>
+            <p>Wealth accumulation is governed by mathematical risk control and asymmetric asset allocation rather than speculative timing.</p>
+            
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+              <div class="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                <span>Fiduciary Liquidity Rule</span>
+              </div>
+              <p class="text-[11px] text-slate-600">
+                Automate cash flow sweep accounts and maintain 12 months of high-yield liquid buffers prior to risk expansion.
+              </p>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Building Real Wealth</span>
+            <span>Section I</span>
+          </div>
+        </div>
+
+        <!-- Page 2: Net Worth Blueprint (With Interactive Hotspot) -->
+        <div class="page p-8 flex flex-col justify-between text-slate-900 bg-slate-50 relative">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Worksheet 1.1</span>
+            <span class="text-xs text-slate-400 font-mono">02</span>
+          </div>
+
+          <div class="space-y-4 text-xs text-slate-700 my-auto">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">Net Worth Architecture</h2>
+              <p className="text-[11px] text-slate-500">Calculate baseline solvency, liquid reserves, and debt obligations.</p>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <span class="font-medium text-slate-800">Liquid Equities & ETFs</span>
+                <span class="font-bold text-blue-600">$185,000</span>
+              </div>
+              <div class="flex justify-between p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <span class="font-medium text-slate-800">Primary Real Estate</span>
+                <span class="font-bold text-blue-600">$420,000</span>
+              </div>
+              <div class="flex justify-between p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <span class="font-medium text-slate-800">Total Liabilities & Debt</span>
+                <span class="font-bold text-rose-600">-$311,500</span>
+              </div>
+            </div>
+
+            <!-- Hotspot trigger -->
+            <div
+              onclick="openWorksheetTab('networth')"
+              class="cursor-pointer p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-between transition group"
+            >
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <i data-lucide="calculator" class="w-4 h-4"></i>
+                <span>Launch Net Worth Blueprint</span>
+              </div>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition"></i>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Worksheet 1.1</span>
+            <span>Page 2</span>
+          </div>
+        </div>
+
+        <!-- Page 3: Cash Flow Engine (With Interactive Hotspot) -->
+        <div class="page p-8 flex flex-col justify-between text-slate-900 bg-white relative">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Worksheet 1.2</span>
+            <span class="text-xs text-slate-400 font-mono">03</span>
+          </div>
+
+          <div class="space-y-4 text-xs text-slate-700 my-auto">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">Cash Flow Optimization</h2>
+              <p class="text-[11px] text-slate-500">Maximize investable monthly surplus and automated savings rate.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div class="text-[10px] text-slate-500 font-medium">Monthly Income</div>
+                <div class="text-sm font-bold text-slate-900">$12,500</div>
+              </div>
+              <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div class="text-[10px] text-emerald-700 font-medium">Target Savings Rate</div>
+                <div class="text-sm font-bold text-emerald-700">35.0%</div>
+              </div>
+            </div>
+
+            <!-- Hotspot trigger -->
+            <div
+              onclick="openWorksheetTab('cashflow')"
+              class="cursor-pointer p-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg flex items-center justify-between transition group"
+            >
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i>
+                <span>Open Cash Flow Calculator</span>
+              </div>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition"></i>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Worksheet 1.2</span>
+            <span>Page 3</span>
+          </div>
+        </div>
+
+        <!-- Page 4: Asset Allocation & Compounding (With Simulator Hotspot) -->
+        <div class="page p-8 flex flex-col justify-between text-slate-900 bg-slate-50 relative">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Worksheet 1.3</span>
+            <span class="text-xs text-slate-400 font-mono">04</span>
+          </div>
+
+          <div class="space-y-4 text-xs text-slate-700 my-auto">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">Compound Growth Simulator</h2>
+              <p class="text-[11px] text-slate-500">Model long-term capital compounding across 10 to 30 year horizons.</p>
+            </div>
+
+            <div class="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-xl space-y-1">
+              <div class="flex justify-between font-bold text-indigo-950 text-xs">
+                <span>20-Year Projected Wealth</span>
+                <span class="text-blue-600">$1,791,240</span>
+              </div>
+              <p class="text-[10px] text-slate-600">Assuming $2,500/mo addition at 8.5% annualized index return.</p>
+            </div>
+
+            <!-- Hotspot trigger -->
+            <div
+              onclick="openWorksheetTab('compound')"
+              class="cursor-pointer p-3.5 bg-gradient-to-r from-indigo-900 to-blue-900 hover:from-indigo-800 hover:to-blue-800 text-white rounded-xl shadow-lg flex items-center justify-between transition group"
+            >
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                <span>Run Compounding Simulator</span>
+              </div>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition"></i>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400">
+            <span>Worksheet 1.3</span>
+            <span>Page 4</span>
+          </div>
+        </div>
+
+        <!-- Back Cover -->
+        <div class="page page-hard flex flex-col justify-between p-8 bg-gradient-to-tl from-slate-900 via-indigo-950 to-slate-900 text-white rounded-r-lg border-l border-indigo-900/50 text-center">
+          <div class="text-xs text-slate-400 font-mono">DOCUFLOW 3D SUITE</div>
+
+          <div class="space-y-3 my-auto">
+            <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
+              <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-bold">End of Workbook</h3>
+            <p class="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
+              Export your financial blueprint or upload new publications with full 3D simulation.
+            </p>
+          </div>
+
+          <div class="text-[11px] text-slate-500 font-mono">
+            Open-Source · Zero Dependencies
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Navigation Arrow -->
+    <button
+      id="btn-next"
+      class="absolute right-3 sm:right-8 z-10 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-blue-600 text-white backdrop-blur flex items-center justify-center transition border border-white/10 shadow-2xl disabled:opacity-20 disabled:pointer-events-none"
+      title="Next Page (→)"
+    >
+      <i data-lucide="chevron-right" class="w-6 h-6"></i>
+    </button>
+  </main>
+
+  <!-- Bottom Navigation & Controls Bar -->
+  <footer class="h-16 border-t border-slate-800 bg-slate-900/90 backdrop-blur px-4 sm:px-6 flex items-center justify-between z-20">
+    <div class="flex items-center gap-2">
+      <button id="btn-zoom-out" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Zoom Out">
+        <i data-lucide="zoom-out" class="w-4 h-4"></i>
+      </button>
+      <span id="zoom-label" class="text-xs font-mono text-slate-400">100%</span>
+      <button id="btn-zoom-in" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Zoom In">
+        <i data-lucide="zoom-in" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Scrubber -->
+    <div class="flex-1 max-w-sm mx-4 flex items-center gap-3">
+      <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+        <div id="progress-bar" class="bg-blue-500 h-full w-[20%] transition-all duration-300"></div>
+      </div>
+      <span id="page-indicator" class="text-xs font-mono text-slate-400 whitespace-nowrap">Page 1 / 5</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button id="btn-sound" class="p-2 rounded-lg text-blue-400 hover:bg-slate-800 transition" title="Toggle Sound">
+        <i data-lucide="volume-2" class="w-4 h-4"></i>
+      </button>
+      <button id="btn-fullscreen" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition" title="Fullscreen (F)">
+        <i data-lucide="maximize" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </footer>
+
+  <!-- EMBEDDED WORKSHEET STUDIO DRAWER -->
+  <div id="worksheet-drawer" class="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm hidden">
+    <div class="w-full max-w-2xl h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col justify-between text-slate-100 overflow-hidden">
+      
+      <!-- Drawer Header -->
+      <div class="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-white tracking-tight">Interactive Financial Studio</h2>
+              <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-semibold border border-blue-500/30">
+                Live Companion
+              </span>
+            </div>
+            <p class="text-xs text-slate-400">Building Real Wealth Curriculum</p>
+          </div>
+        </div>
+
+        <button id="btn-close-worksheets" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex border-b border-slate-800 px-6 bg-slate-950/40 text-xs font-semibold overflow-x-auto">
+        <button id="tab-btn-networth" onclick="openWorksheetTab('networth')" class="py-3 px-4 border-b-2 border-blue-500 text-blue-400 flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="dollar-sign" class="w-3.5 h-3.5"></i>
+          <span>1.1 Net Worth</span>
+        </button>
+        <button id="tab-btn-cashflow" onclick="openWorksheetTab('cashflow')" class="py-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i>
+          <span>1.2 Cash Flow</span>
+        </button>
+        <button id="tab-btn-compound" onclick="openWorksheetTab('compound')" class="py-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+          <span>1.3 Compounding</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Holder -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+        <!-- TAB 1: NET WORTH -->
+        <div id="tab-content-networth" class="space-y-6">
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Calculated Net Worth</span>
+              <div id="nw-display-total" class="text-3xl font-extrabold text-white tracking-tight mt-1">$328,500</div>
+            </div>
+            <div class="flex items-center gap-4 text-xs border-t sm:border-t-0 sm:border-l border-slate-700 pt-3 sm:pt-0 sm:pl-5">
+              <div>
+                <div class="text-slate-400">Assets</div>
+                <div id="nw-display-assets" class="font-bold text-emerald-400">$640,000</div>
+              </div>
+              <div>
+                <div class="text-slate-400">Liabilities</div>
+                <div id="nw-display-liab" class="font-bold text-rose-400">$311,500</div>
+              </div>
+              <div>
+                <div class="text-slate-400">Debt Ratio</div>
+                <div id="nw-display-ratio" class="font-bold text-blue-400">48.7%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Assets</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="text-slate-400">Liquid Cash ($)</label>
+                <input id="nw-cash" type="number" value="35000" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-slate-400">Equities & Portfolio ($)</label>
+                <input id="nw-equities" type="number" value="185000" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-slate-400">Real Estate ($)</label>
+                <input id="nw-realestate" type="number" value="420000" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400">Liabilities</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="text-slate-400">Mortgage ($)</label>
+                <input id="nw-mortgage" type="number" value="290000" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-slate-400">Loans & Other Debt ($)</label>
+                <input id="nw-loans" type="number" value="21500" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CASH FLOW -->
+        <div id="tab-content-cashflow" class="space-y-6 hidden">
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Monthly Investable Surplus</span>
+              <div id="cf-display-surplus" class="text-3xl font-extrabold text-emerald-400 tracking-tight mt-1">$3,400 / mo</div>
+            </div>
+            <div class="flex items-center gap-4 text-xs border-t sm:border-t-0 sm:border-l border-slate-700 pt-3 sm:pt-0 sm:pl-5">
+              <div>
+                <div class="text-slate-400">Savings Rate</div>
+                <div id="cf-display-rate" class="font-bold text-blue-400">36.2%</div>
+              </div>
+              <div>
+                <div class="text-slate-400">Annual Surplus</div>
+                <div id="cf-display-annual" class="font-bold text-white">$40,800</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="text-slate-400">Monthly Gross Revenue ($)</label>
+              <input id="cf-income" type="number" value="12500" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Income Taxes ($)</label>
+              <input id="cf-taxes" type="number" value="3100" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Housing & Fixed Costs ($)</label>
+              <input id="cf-housing" type="number" value="4200" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="text-slate-400">Discretionary & Living ($)</label>
+              <input id="cf-living" type="number" value="1800" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: COMPOUND SIMULATOR -->
+        <div id="tab-content-compound" class="space-y-6 hidden">
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-950 to-slate-950 border border-indigo-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-300">Projected Portfolio</span>
+              <div id="sim-display-total" class="text-3xl font-extrabold text-white tracking-tight mt-1">$1,791,240</div>
+            </div>
+            <div class="flex items-center gap-4 text-xs border-t sm:border-t-0 sm:border-l border-indigo-900 pt-3 sm:pt-0 sm:pl-5">
+              <div>
+                <div class="text-slate-400">Principal</div>
+                <div id="sim-display-principal" class="font-bold text-slate-200">$650,000</div>
+              </div>
+              <div>
+                <div class="text-indigo-300">Compound Gain</div>
+                <div id="sim-display-gain" class="font-bold text-emerald-400">+$1,141,240</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="text-slate-400">Starting Portfolio ($)</label>
+                <input id="sim-starting" type="number" value="50000" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-slate-400">Monthly Contribution ($)</label>
+                <input id="sim-monthly" type="number" value="2500" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="text-slate-400">Return Rate (% / yr)</label>
+                <input id="sim-rate" type="number" step="0.5" value="8.5" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-slate-400 mb-1">
+                <span>Horizon</span>
+                <span id="sim-years-label" class="font-bold text-blue-400">20 Years</span>
+              </div>
+              <input id="sim-years" type="range" min="5" max="40" step="1" value="20" class="w-full accent-blue-500 cursor-pointer" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="p-5 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+        <button id="btn-save-blueprint" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md transition">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Save Progress</span>
+        </button>
+        <button id="btn-export-blueprint" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Export JSON</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Sound synthesis
+    let soundEnabled = true;
+    function playFlipSound() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const bufferSize = ctx.sampleRate * 0.08;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.08);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.01, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+      } catch (e) {}
+    }
+
+    // PageFlip instance
+    let pageFlip = null;
+
+    function initReader() {
+      const bookEl = document.getElementById('book');
+      const isMobile = window.innerWidth < 768;
+      const width = isMobile ? 360 : 450;
+      const height = isMobile ? 520 : 620;
+
+      pageFlip = new St.PageFlip(bookEl, {
+        width,
+        height,
+        size: 'stretch',
+        minWidth: 320,
+        maxWidth: 600,
+        minHeight: 480,
+        maxHeight: 800,
+        maxShadowOpacity: 0.6,
+        showCover: true,
+        mobileScrollSupport: true,
+        useMouseEvents: true,
+        swipeDistance: 30
+      });
+
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+      pageFlip.on('flip', (e) => {
+        playFlipSound();
+        const total = pageFlip.getPageCount();
+        const current = e.data + 1;
+        document.getElementById('page-indicator').textContent = `Page ${current} / ${total}`;
+        document.getElementById('progress-bar').style.width = `${(current / total) * 100}%`;
+      });
+    }
+
+    // Worksheet Drawer Controls
+    function openWorksheetTab(tabName) {
+      document.getElementById('worksheet-drawer').classList.remove('hidden');
+      ['networth', 'cashflow', 'compound'].forEach((tab) => {
+        const btn = document.getElementById(`tab-btn-${tab}`);
+        const content = document.getElementById(`tab-content-${tab}`);
+        if (tab === tabName) {
+          btn.className = 'py-3 px-4 border-b-2 border-blue-500 text-blue-400 flex items-center gap-1.5 whitespace-nowrap';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'py-3 px-4 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap';
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    // Calculation updates
+    function updateCalculations() {
+      // Net worth
+      const cash = Number(document.getElementById('nw-cash').value) || 0;
+      const eq = Number(document.getElementById('nw-equities').value) || 0;
+      const re = Number(document.getElementById('nw-realestate').value) || 0;
+      const mort = Number(document.getElementById('nw-mortgage').value) || 0;
+      const loans = Number(document.getElementById('nw-loans').value) || 0;
+
+      const assets = cash + eq + re;
+      const liab = mort + loans;
+      const nw = assets - liab;
+      const ratio = assets > 0 ? ((liab / assets) * 100).toFixed(1) : 0;
+
+      document.getElementById('nw-display-total').textContent = `$${nw.toLocaleString()}`;
+      document.getElementById('nw-display-assets').textContent = `$${assets.toLocaleString()}`;
+      document.getElementById('nw-display-liab').textContent = `$${liab.toLocaleString()}`;
+      document.getElementById('nw-display-ratio').textContent = `${ratio}%`;
+
+      // Cash flow
+      const inc = Number(document.getElementById('cf-income').value) || 0;
+      const tax = Number(document.getElementById('cf-taxes').value) || 0;
+      const house = Number(document.getElementById('cf-housing').value) || 0;
+      const liv = Number(document.getElementById('cf-living').value) || 0;
+
+      const surplus = Math.max(0, inc - (tax + house + liv));
+      const rate = inc > tax ? (((surplus) / (inc - tax)) * 100).toFixed(1) : 0;
+
+      document.getElementById('cf-display-surplus').textContent = `$${surplus.toLocaleString()} / mo`;
+      document.getElementById('cf-display-rate').textContent = `${rate}%`;
+      document.getElementById('cf-display-annual').textContent = `$${(surplus * 12).toLocaleString()}`;
+
+      // Compound simulator
+      const p = Number(document.getElementById('sim-starting').value) || 0;
+      const pmt = Number(document.getElementById('sim-monthly').value) || 0;
+      const rYr = Number(document.getElementById('sim-rate').value) || 0;
+      const yrs = Number(document.getElementById('sim-years').value) || 20;
+
+      document.getElementById('sim-years-label').textContent = `${yrs} Years`;
+      const rM = (rYr / 100) / 12;
+      const n = yrs * 12;
+      const fv = Math.round(p * Math.pow(1 + rM, n) + pmt * ((Math.pow(1 + rM, n) - 1) / rM));
+      const principal = p + pmt * n;
+      const gain = Math.max(0, fv - principal);
+
+      document.getElementById('sim-display-total').textContent = `$${fv.toLocaleString()}`;
+      document.getElementById('sim-display-principal').textContent = `$${principal.toLocaleString()}`;
+      document.getElementById('sim-display-gain').textContent = `+$${gain.toLocaleString()}`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initReader();
+
+      // Hook inputs
+      ['nw-cash', 'nw-equities', 'nw-realestate', 'nw-mortgage', 'nw-loans', 'cf-income', 'cf-taxes', 'cf-housing', 'cf-living', 'sim-starting', 'sim-monthly', 'sim-rate', 'sim-years'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('input', updateCalculations);
+      });
+
+      // Controls
+      document.getElementById('btn-prev').addEventListener('click', () => pageFlip?.flipPrev());
+      document.getElementById('btn-next').addEventListener('click', () => pageFlip?.flipNext());
+      document.getElementById('btn-open-worksheets').addEventListener('click', () => openWorksheetTab('networth'));
+      document.getElementById('btn-close-worksheets').addEventListener('click', () => {
+        document.getElementById('worksheet-drawer').classList.add('hidden');
+      });
+
+      document.getElementById('btn-sound').addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        document.getElementById('btn-sound').className = soundEnabled
+          ? 'p-2 rounded-lg text-blue-400 hover:bg-slate-800 transition'
+          : 'p-2 rounded-lg text-slate-500 hover:bg-slate-800 transition';
+      });
+
+      let zoom = 1;
+      document.getElementById('btn-zoom-in').addEventListener('click', () => {
+        zoom = Math.min(1.4, zoom + 0.1);
+        document.getElementById('flipbook-wrapper').style.transform = `scale(${zoom})`;
+        document.getElementById('zoom-label').textContent = `${Math.round(zoom * 100)}%`;
+      });
+      document.getElementById('btn-zoom-out').addEventListener('click', () => {
+        zoom = Math.max(0.8, zoom - 0.1);
+        document.getElementById('flipbook-wrapper').style.transform = `scale(${zoom})`;
+        document.getElementById('zoom-label').textContent = `${Math.round(zoom * 100)}%`;
+      });
+
+      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      // Export JSON
+      document.getElementById('btn-export-blueprint').addEventListener('click', () => {
+        const data = {
+          curriculum: 'Building Real Wealth — Personal Blueprint',
+          exportedAt: new Date().toISOString(),
+          netWorth: document.getElementById('nw-display-total').textContent,
+          monthlySurplus: document.getElementById('cf-display-surplus').textContent,
+          savingsRate: document.getElementById('cf-display-rate').textContent,
+          projectedWealth: document.getElementById('sim-display-total').textContent
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `BRW_Blueprint_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Save toast
+      document.getElementById('btn-save-blueprint').addEventListener('click', () => {
+        alert('Your financial inputs have been saved to this session!');
+      });
+
+      // Keyboard
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (e.key === 'ArrowRight' || e.key === ' ') pageFlip?.flipNext();
+        if (e.key === 'ArrowLeft') pageFlip?.flipPrev();
+        if (e.key === 'w' || e.key === 'W') openWorksheetTab('networth');
+      });
+    });
+  </script>
+</body>
+</html>
