@@ -67,21 +67,31 @@ let MEMORY_FLIPBOOKS = [
         page_number: 2,
         x_pct: 10,
         y_pct: 75,
-        width_pct: 35,
-        height_pct: 10,
-        type: 'page_jump',
-        title: 'Jump to Net Worth Worksheet',
-        payload: '3'
+        width_pct: 40,
+        height_pct: 12,
+        type: 'worksheet',
+        title: '📊 Launch Net Worth Blueprint',
+        payload: 'networth'
+      },
+      {
+        page_number: 3,
+        x_pct: 10,
+        y_pct: 75,
+        width_pct: 40,
+        height_pct: 12,
+        type: 'worksheet',
+        title: '💸 Open Cash Flow Engine',
+        payload: 'cashflow'
       },
       {
         page_number: 5,
-        x_pct: 55,
-        y_pct: 80,
-        width_pct: 35,
-        height_pct: 10,
-        type: 'link',
-        title: 'Visit Fiduciary Resource Hub',
-        payload: 'https://zigg.freysa.dev'
+        x_pct: 50,
+        y_pct: 75,
+        width_pct: 42,
+        height_pct: 12,
+        type: 'worksheet',
+        title: '📈 Run Compound Simulator',
+        payload: 'compound'
       }
     ]
   }
@@ -130,7 +140,6 @@ export async function getFlipbookBySlug(slug) {
         .single();
       
       if (data && !error) {
-        // Sort pages in ascending order
         if (data.pages) {
           data.pages.sort((a, b) => a.page_number - b.page_number);
         }
